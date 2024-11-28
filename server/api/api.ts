@@ -67,7 +67,7 @@ export class API {
                 const id = result[0].id;
                 const token = jwt.sign(
                     {
-                        exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 10,
+                        expiresIn: "10d",
                         data: { id, username },
                     },
                     this.jwtSecretKey
