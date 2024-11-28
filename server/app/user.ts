@@ -27,4 +27,8 @@ export class User {
     public get getUserId(): number {
         return this.userId;
     }
+
+    public get getUsername(): string {
+        return this.username;
+    }
 }
