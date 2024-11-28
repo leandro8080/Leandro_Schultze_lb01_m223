@@ -9,6 +9,7 @@ export class API {
     app: Express;
     db: Database;
     jwtSecretKey: string;
+    loggedInUsers: User[];
     // Constructor
     constructor(app: Express, db: Database) {
         this.app = app;
@@ -16,6 +17,7 @@ export class API {
         this.db = db;
         this.app.get("/hello", this.sayHello);
         this.app.post("/api/login", this.login);
+        this.loggedInUsers = [];
     }
     // Methods
     private sayHello(req: Request, res: Response) {
@@ -33,15 +35,29 @@ export class API {
             const id = result[0].id;
             const token = jwt.sign(
                 {
-                    exp: Math.floor(Date.now() / 1000) + 60 * 60,
+                    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 10,
                     data: { id, username },
                 },
                 this.jwtSecretKey
             );
             const role = result[0].role;
-            const user = new User(id, username, userPassword, role);
+            if (this.getUserObjectById(id) === undefined) {
+                const user = new User(id, username, userPassword, role);
+                this.loggedInUsers.push(user);
+            }
             return res.status(200).send(token);
         }
         res.sendStatus(401);
     };
+
+    private getUserObjectById(id: number): User | undefined {
+        let result: User | undefined = undefined;
+        this.loggedInUsers.forEach((user) => {
+            if (user.getUserId === id) {
+                result = user;
+                return;
+            }
+        });
+        return result;
+    }
 }

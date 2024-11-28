@@ -23,4 +23,8 @@ export class User {
         this.password = password;
         this.role = role;
     }
+
+    public get getUserId(): number {
+        return this.userId;
+    }
 }
