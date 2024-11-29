@@ -35,6 +35,8 @@ export class API {
                 .withMessage("Username must be a string")
                 .notEmpty()
                 .withMessage("Username is empty")
+                .isLength({ max: 20 })
+                .withMessage("Username is to long")
                 .custom(async (username) => {
                     if (!(await this.usernameExists(username)))
                         throw new Error("Username already in use");
@@ -53,6 +55,8 @@ export class API {
                 .withMessage("Tweet must be a string")
                 .notEmpty()
                 .withMessage("Tweet is empty")
+                .isLength({ max: 400 })
+                .withMessage("Post is to long")
                 .escape(),
             this.postTweet
         );

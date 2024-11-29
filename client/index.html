@@ -1,14 +1,73 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="/style.css" />
-    <script src="client.js"></script>
-    <title>Typescript Starter</title>
-  </head>
-  <body>
-    <h1>Simple Typescript Starter</h1>
-  </body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="/style.css" />
+        <title>Mini twitter</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="index.js"></script>
+    </head>
+    <body class="bg-gray-950 text-white w-screen h-screen font-sans">
+        <nav class="flex flex-row justify-center gap-6 p-2 text-lg">
+            <a href="/" class="underline underline-offset-4 decoration-sky-600"
+                >Tweets</a
+            >
+            <a href="/" class="text-gray-300 hover:text-white">Profile</a>
+        </nav>
+        <main>
+            <section class="flex justify-center mb-10">
+                <section
+                    class="border-2 h-auto p-2 w-2/3 rounded-xl border-sky-600"
+                >
+                    <textarea
+                        class="placeholder-gray-200 bg-gray-950 resize-none overflow-hidden w-full h-auto border-none outline-none"
+                        placeholder="What are you thinking about?"
+                        maxlength="400"
+                        rows="1"
+                        oninput="autoResize(this)"
+                    ></textarea>
+                    <section>
+                        <section
+                            class="h-full w-full flex justify-between gap-2"
+                        >
+                            <p class="text-red-600 w-full break-all"></p>
+                            <button
+                                class="bg-sky-500 w-20 h-10 px-3 py-1 rounded-xl font-semibold text-lg hover:bg-sky-600"
+                            >
+                                Post
+                            </button>
+                        </section>
+                    </section>
+                </section>
+            </section>
+            <section class="flex flex-col gap-2" id="tweetList">
+                <section class="flex justify-center">
+                    <section
+                        class="border-2 h-auto p-2 w-2/3 hover:cursor-pointer rounded-xl border-sky-600"
+                    >
+                        <p class="font-bold">@Username</p>
+                        <p
+                            class="bg-gray-950 resize-none overflow-hidden w-full h-auto border-none outline-none break-all"
+                        >
+                            content
+                        </p>
+                    </section>
+                </section>
+                <section class="flex justify-center">
+                    <section
+                        class="border-2 h-auto p-2 w-2/3 hover:cursor-pointer rounded-xl border-sky-600"
+                    >
+                        <p class="font-bold">@Username</p>
+                        <p
+                            class="bg-gray-950 resize-none overflow-hidden w-full h-auto border-none outline-none break-all"
+                        >
+                            content
+                        </p>
+                    </section>
+                </section>
+            </section>
+        </main>
+    </body>
 </html>
