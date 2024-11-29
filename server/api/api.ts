@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { User } from "../app/user";
 import { Post } from "../app/post";
-import { body, matchedData, validationResult } from "express-validator";
+import { query, body, matchedData, validationResult } from "express-validator";
 import * as dotenv from "dotenv";
 dotenv.config();
 
@@ -14,6 +14,7 @@ export class API {
     db: Database;
     jwtSecretKey = process.env.jwtSecretKey;
     loggedInUsers: User[];
+    createdPosts: Post[];
     // Constructor
     constructor(app: Express, db: Database) {
         this.app = app;
@@ -55,7 +56,19 @@ export class API {
                 .escape(),
             this.postTweet
         );
+        this.app.get(
+            "/api/tweets",
+            this.verifyToken,
+            query("id")
+                .optional()
+                .isInt({ min: 1 })
+                .withMessage("ID must be a number greater than or equal to 1"),
+            this.getTweets
+        );
         this.loggedInUsers = [];
+
+        this.createdPosts = [];
+        this.fillCreatedPosts();
     }
     // Methods
     private sayHello(req: Request, res: Response) {
@@ -143,9 +156,32 @@ export class API {
             const query = `INSERT INTO posts (userId, content) VALUES (${userId}, "${content}")`;
             const result = await this.db.executeSQL(query);
             const postId = Number(result.insertId);
-            user.postTweet(postId, content);
+            const newPost = user.postTweet(postId, content);
+            this.createdPosts.push(newPost);
 
             return res.sendStatus(200);
+        } catch (e) {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    };
+
+    private getTweets = async (req: Request, res: Response): Promise<any> => {
+        try {
+            const validationRes = validationResult(req);
+            if (!validationRes.isEmpty()) {
+                return res.status(400).send(validationRes.array()[0].msg);
+            }
+            const { id } = req.query;
+
+            if (id) {
+                const numberId = Number(id);
+                const post = await this.getPostById(numberId);
+                if (post) return res.status(200).send(post);
+                return res.status(400).send("Id doesn't exist");
+            }
+
+            return res.status(200).send(this.createdPosts);
         } catch (e) {
             console.log(e);
             return res.sendStatus(500);
@@ -193,6 +229,27 @@ export class API {
         }
 
         return user;
+    };
+
+    private fillCreatedPosts = async (): Promise<void> => {
+        const query = `SELECT id, userId, content FROM posts`;
+        const response = await this.db.executeSQL(query);
+        response.forEach(async (post: any) => {
+            const user = await this.createUserIfUndefined(post.userId);
+            const newPost = user.postTweet(post.id, post.content);
+            if (newPost) this.createdPosts.push(newPost);
+        });
+    };
+
+    private getPostById = async (postId: number): Promise<Post | undefined> => {
+        let result: Post | undefined = undefined;
+        this.createdPosts.forEach((post) => {
+            if (post.getPostId === postId) {
+                result = post;
+                return;
+            }
+        });
+        return result;
     };
 
     // Middleware

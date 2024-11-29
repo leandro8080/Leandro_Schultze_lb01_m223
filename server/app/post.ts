@@ -6,8 +6,14 @@ export class Post {
     private content: string;
     private comments: Comment;
     private likes: Like[];
-    constructor(postId: number, content: string) {
+    private userId: number;
+    constructor(postId: number, content: string, userId: number) {
         this.postId = postId;
         this.content = content;
+        this.userId = userId;
+    }
+
+    public get getPostId() {
+        return this.postId;
     }
 }
