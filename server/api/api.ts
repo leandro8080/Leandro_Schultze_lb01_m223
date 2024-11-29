@@ -4,17 +4,18 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { User } from "../app/user";
 import { body, matchedData, validationResult } from "express-validator";
+import * as dotenv from "dotenv";
+dotenv.config();
 
 export class API {
     // Properties
     app: Express;
     db: Database;
-    jwtSecretKey: string;
+    jwtSecretKey = process.env.jwtSecretKey;
     loggedInUsers: User[];
     // Constructor
     constructor(app: Express, db: Database) {
         this.app = app;
-        this.jwtSecretKey = "SuperSecretKey";
         this.db = db;
         this.app.get("/hello", this.sayHello);
         this.app.post(
@@ -42,6 +43,17 @@ export class API {
                 .withMessage("Password must be at least 8 characters"),
             this.register
         );
+        this.app.post(
+            "/api/tweets",
+            this.verifyToken,
+            body("content")
+                .isString()
+                .withMessage("Tweet must be a string")
+                .notEmpty()
+                .withMessage("Tweet is empty")
+                .escape(),
+            this.postTweet
+        );
         this.loggedInUsers = [];
     }
     // Methods
@@ -56,7 +68,8 @@ export class API {
                 return res.status(400).send(validationRes.array()[0].msg);
             }
 
-            const { username, password } = matchedData(req);
+            const { username } = matchedData(req);
+            const { password } = req.body;
             const query = `SELECT id, password, role FROM users WHERE username = "${username}";`;
             const result = await this.db.executeSQL(query);
             if (!result[0])
@@ -81,6 +94,7 @@ export class API {
             }
             return res.status(401).send("Username or password wrong");
         } catch (e) {
+            console.log(e);
             return res.sendStatus(500);
         }
     };
@@ -100,7 +114,28 @@ export class API {
             this.db.executeSQL(query);
             return res.sendStatus(200);
         } catch (e) {
-            res.sendStatus(500);
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    };
+
+    private postTweet = async (req: Request, res: Response): Promise<any> => {
+        try {
+            const validationRes = validationResult(req);
+            if (!validationRes.isEmpty()) {
+                return res.status(400).send(validationRes.array()[0].msg);
+            }
+
+            const { content } = matchedData(req);
+            const { userId } = req.body;
+
+            const query = `INSERT INTO posts (userId, content) VALUES (${userId}, "${content}")`;
+            this.db.executeSQL(query);
+
+            return res.sendStatus(200);
+        } catch (e) {
+            console.log(e);
+            return res.sendStatus(500);
         }
     };
 
@@ -120,5 +155,27 @@ export class API {
         const response = await this.db.executeSQL(query);
         if (response.length === 0) return true;
         return false;
+    };
+
+    // Middleware
+
+    private verifyToken = (req, res, next) => {
+        const authHeader = req.headers["authorization"];
+        if (!authHeader)
+            return res.status(403).send("Failed to authenticate token");
+        const token = authHeader.split(" ")[1];
+
+        if (!token) {
+            return res.status(401).json({ message: "No token provided" });
+        }
+
+        jwt.verify(token, this.jwtSecretKey, (err, decoded) => {
+            if (err) {
+                return res.status(403).send("Failed to authenticate token");
+            }
+            const { id, username } = decoded.data;
+            req.body = { ...req.body, userId: id, username: username };
+            next();
+        });
     };
 }

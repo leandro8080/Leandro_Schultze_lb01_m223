@@ -31,4 +31,9 @@ export class User {
     public get getUsername(): string {
         return this.username;
     }
+
+    public postTweet = (postId: number, content: string) => {
+        const post = new Post(postId, content);
+        this.posts.push(post);
+    };
 }
