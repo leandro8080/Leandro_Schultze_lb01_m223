@@ -3,6 +3,7 @@ import { Database } from "../database/database";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { User } from "../app/user";
+import { Post } from "../app/post";
 import { body, matchedData, validationResult } from "express-validator";
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -87,9 +88,17 @@ export class API {
                 );
                 const role = result[0].role;
                 if (this.getUserObjectById(id) === undefined) {
-                    const user = new User(id, username, userPassword, role);
+                    const posts = await this.getPostsByUserId(id);
+                    const user = new User(
+                        id,
+                        username,
+                        userPassword,
+                        role,
+                        posts || []
+                    );
                     this.loggedInUsers.push(user);
                 }
+                console.log(this.loggedInUsers);
                 return res.status(200).send(token);
             }
             return res.status(401).send("Username or password wrong");
@@ -112,6 +121,7 @@ export class API {
 
             const query = `INSERT INTO users (username, password, role) VALUES ("${username}", "${await hashedPassword}", "user");`;
             this.db.executeSQL(query);
+
             return res.sendStatus(200);
         } catch (e) {
             console.log(e);
@@ -128,9 +138,12 @@ export class API {
 
             const { content } = matchedData(req);
             const { userId } = req.body;
+            const user = await this.createUserIfUndefined(userId);
 
             const query = `INSERT INTO posts (userId, content) VALUES (${userId}, "${content}")`;
-            this.db.executeSQL(query);
+            const result = await this.db.executeSQL(query);
+            const postId = Number(result.insertId);
+            user.postTweet(postId, content);
 
             return res.sendStatus(200);
         } catch (e) {
@@ -155,6 +168,31 @@ export class API {
         const response = await this.db.executeSQL(query);
         if (response.length === 0) return true;
         return false;
+    };
+
+    private getPostsByUserId = async (
+        userId: number
+    ): Promise<Post[] | null> => {
+        const query = `SELECT id, content FROM posts WHERE userId = ${userId};`;
+        const response = await this.db.executeSQL(query);
+        if (response.length === 0) return null;
+        return response;
+    };
+
+    private createUserIfUndefined = async (userId: number): Promise<User> => {
+        let user = this.getUserObjectById(userId);
+        if (user === undefined) {
+            const posts = await this.getPostsByUserId(userId);
+            const query = `SELECT username, password, role FROM users WHERE id = ${userId};`;
+            const result = await this.db.executeSQL(query);
+            const username = result[0].username;
+            const password = result[0].password;
+            const role = result[0].role;
+            user = new User(userId, username, password, role, posts || []);
+            this.loggedInUsers.push(user);
+        }
+
+        return user;
     };
 
     // Middleware

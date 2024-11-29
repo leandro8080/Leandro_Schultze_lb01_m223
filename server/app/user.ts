@@ -16,12 +16,14 @@ export class User {
         userId: number,
         username: string,
         password: string,
-        role: Role
+        role: Role,
+        posts: Post[]
     ) {
         this.userId = userId;
         this.username = username;
         this.password = password;
         this.role = role;
+        this.posts = posts;
     }
 
     public get getUserId(): number {
