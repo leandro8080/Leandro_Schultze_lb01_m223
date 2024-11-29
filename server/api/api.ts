@@ -184,7 +184,18 @@ export class API {
                 return res.status(400).send("Id doesn't exist");
             }
 
-            return res.status(200).send(this.createdPosts);
+            const tweetsWithUsernames = await Promise.all(
+                this.createdPosts.map(async (tweet) => {
+                    const user = await this.createUserIfUndefined(
+                        tweet.getUserId
+                    );
+                    return {
+                        ...tweet,
+                        username: user.getUsername,
+                    };
+                })
+            );
+            return res.status(200).send(tweetsWithUsernames.reverse());
         } catch (e) {
             console.log(e);
             return res.sendStatus(500);
