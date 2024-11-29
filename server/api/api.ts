@@ -115,7 +115,6 @@ export class API {
                     );
                     this.loggedInUsers.push(user);
                 }
-                console.log(this.loggedInUsers);
                 return res.status(200).send(token);
             }
             return res.status(401).send("Username or password wrong");
