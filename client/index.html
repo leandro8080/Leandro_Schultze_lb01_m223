@@ -9,7 +9,9 @@
         <script src="https://cdn.tailwindcss.com"></script>
         <script src="index.js"></script>
     </head>
-    <body class="bg-gray-950 text-white w-screen h-screen font-sans">
+    <body
+        class="bg-gray-950 text-white w-screen h-screen font-sans overflow-x-hidden"
+    >
         <nav class="flex flex-row justify-center gap-6 p-2 text-lg">
             <a href="/" class="underline underline-offset-4 decoration-sky-500"
                 >Tweets</a
@@ -22,6 +24,7 @@
                     class="border-2 h-auto p-2 w-2/3 rounded-xl border-sky-500"
                 >
                     <textarea
+                        id="tweetInput"
                         lang="en"
                         class="placeholder-gray-300 bg-gray-950 resize-none overflow-hidden w-full h-auto border-none outline-none"
                         placeholder="What are you thinking about?"
@@ -33,8 +36,12 @@
                         <section
                             class="h-full w-full flex justify-between gap-2"
                         >
-                            <p class="text-red-500 w-full break-all"></p>
+                            <p
+                                id="feedbackText"
+                                class="text-red-500 w-full break-all text-sm"
+                            ></p>
                             <button
+                                id="postTweetButton"
                                 class="bg-sky-500 w-20 h-10 px-3 py-1 rounded-xl font-semibold text-lg hover:bg-sky-600"
                             >
                                 Post

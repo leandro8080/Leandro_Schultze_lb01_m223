@@ -9,12 +9,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const tweetList = document.getElementById("tweetList");
     const feedbackText = document.getElementById("feedbackText");
 
+    const tweetInput = document.getElementById("tweetInput");
+    const postTweetButton = document.getElementById("postTweetButton");
+
     const getTweets = async () => {
         const response = await fetch(`/api/tweets`, {
             headers: { Authorization: `Bearer ${token}` },
         });
-        const result = await response.json();
+
         if (response.status === 200) {
+            const result = await response.json();
             tweetList.innerHTML = "";
             result.forEach((tweet) => {
                 tweetList.innerHTML += `<section class="flex justify-center">
@@ -31,8 +35,39 @@ document.addEventListener("DOMContentLoaded", () => {
                 </section>`;
             });
         } else {
+            const result = await response.text();
             feedbackText.innerText = result;
         }
     };
+
+    const createTweet = async () => {
+        const content = tweetInput.value;
+        console.log(content);
+        const response = await fetch("/api/tweets", {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ content }),
+        });
+        const result = await response.text();
+        if (response.status === 200) {
+            feedbackText.classList.remove("text-red-500");
+            feedbackText.classList.add("text-green-500");
+            tweetInput.value = "";
+            feedbackText.innerText = result;
+            getTweets();
+        } else {
+            feedbackText.classList.remove("text-green-500");
+            feedbackText.classList.add("text-red-500");
+            feedbackText.innerText = result;
+        }
+    };
+
+    postTweetButton.addEventListener("click", async () => {
+        createTweet();
+    });
+
     getTweets();
 });

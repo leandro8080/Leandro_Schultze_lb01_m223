@@ -31,10 +31,10 @@ export class API {
         this.app.post(
             "/api/register",
             body("username")
-                .isString()
-                .withMessage("Username must be a string")
                 .notEmpty()
                 .withMessage("Username is empty")
+                .isString()
+                .withMessage("Username must be a string")
                 .isLength({ max: 20 })
                 .withMessage("Username is to long")
                 .custom(async (username) => {
@@ -51,10 +51,10 @@ export class API {
             "/api/tweets",
             this.verifyToken,
             body("content")
-                .isString()
-                .withMessage("Tweet must be a string")
                 .notEmpty()
                 .withMessage("Tweet is empty")
+                .isString()
+                .withMessage("Tweet must be a string")
                 .isLength({ max: 400 })
                 .withMessage("Post is to long")
                 .escape(),
