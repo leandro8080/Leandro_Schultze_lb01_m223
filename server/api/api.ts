@@ -54,6 +54,7 @@ export class API {
             "/api/tweets",
             this.verifyToken,
             body("content")
+                .trim()
                 .notEmpty()
                 .withMessage("Tweet is empty")
                 .isString()

@@ -60,6 +60,11 @@ class Backend {
             const __dirname = resolve(dirname(""));
             res.sendFile(__dirname + "/client/register.html");
         });
+
+        this._app.get("/tweets/:id", (req: Request, res: Response) => {
+            const __dirname = resolve(dirname(""));
+            res.sendFile(__dirname + "/client/tweet.html");
+        });
     }
 
     private startServer(): void {
