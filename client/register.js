@@ -1,13 +1,21 @@
 document.addEventListener("DOMContentLoaded", () => {
     const usernameInput = document.getElementById("usernameInput");
     const passwordInput = document.getElementById("passwordInput");
-    const loginButton = document.getElementById("loginButton");
+    const registerButton = document.getElementById("registerButton");
     const feedbackText = document.getElementById("feedbackText");
+    const confirmPasswordInput = document.getElementById(
+        "confirmPasswordInput"
+    );
 
-    const login = async () => {
+    const register = async () => {
         const username = usernameInput.value;
         const password = passwordInput.value;
-        const response = await fetch("/api/login", {
+        const passwordConfirm = confirmPasswordInput.value;
+        if (password !== passwordConfirm) {
+            feedbackText.innerText = "Passwords do not match";
+            return;
+        }
+        const response = await fetch("/api/register", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -17,22 +25,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const result = await response.text();
         if (response.status === 200) {
-            localStorage.setItem("token", result);
-            window.location.href = "/";
+            window.location.href = "/login";
         } else {
             feedbackText.innerText = result;
         }
     };
 
-    loginButton.addEventListener("click", async () => {
-        login();
+    registerButton.addEventListener("click", async () => {
+        register();
     });
 
     usernameInput.addEventListener("keydown", async (event) => {
-        if (event.key === "Enter") login();
+        if (event.key === "Enter") register();
     });
 
     passwordInput.addEventListener("keydown", async (event) => {
-        if (event.key === "Enter") login();
+        if (event.key === "Enter") register();
+    });
+
+    confirmPasswordInput.addEventListener("keydown", async (event) => {
+        if (event.key === "Enter") register();
     });
 });

@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
             feedbackText.classList.remove("text-red-500");
             feedbackText.classList.add("text-green-500");
             tweetInput.value = "";
-            feedbackText.innerText = result;
+            feedbackText.innerText = "Tweet was successfully posted";
             getTweets();
         } else {
             feedbackText.classList.remove("text-green-500");
@@ -67,6 +67,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     postTweetButton.addEventListener("click", async () => {
         createTweet();
+    });
+
+    tweetInput.addEventListener("keydown", async (event) => {
+        if (event.key === "Enter") createTweet();
     });
 
     getTweets();

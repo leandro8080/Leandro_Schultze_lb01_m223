@@ -5,13 +5,13 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="stylesheet" href="/style.css" />
-        <title>Mini twitter login</title>
+        <title>Mini twitter register</title>
         <script src="https://cdn.tailwindcss.com"></script>
-        <script src="login.js"></script>
+        <script src="register.js"></script>
     </head>
     <body class="bg-gray-950 text-white w-screen h-screen font-sans">
         <header class="text-2xl font-bold flex justify-center p-6">
-            <h1>Welcome to Mini twitter!</h1>
+            <h1>Register now!</h1>
         </header>
         <main class="flex justify-center">
             <section
@@ -34,17 +34,25 @@
                         placeholder="Password"
                         type="password"
                     />
+                    <br />
+                    <label>Confirm Password</label>
+                    <input
+                        id="confirmPasswordInput"
+                        class="border bg-gray-950 rounded-md h-10 p-1"
+                        placeholder="Confirm Password"
+                        type="password"
+                    />
                 </section>
                 <p class="text-xs text-red-500" id="feedbackText"></p>
                 <section
                     class="flex justify-between min-w-60 w-1/4 items-start"
                 >
-                    <a href="/register" class="text-sky-500">Register now!</a>
+                    <a href="/login" class="text-sky-500">Back to login</a>
                     <button
                         class="bg-sky-500 w-24 h-10 px-3 py-1 rounded-xl font-semibold text-lg hover:bg-sky-600"
-                        id="loginButton"
+                        id="registerButton"
                     >
-                        Login
+                        Register
                     </button>
                 </section>
             </section>
