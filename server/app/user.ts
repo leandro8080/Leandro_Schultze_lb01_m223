@@ -9,7 +9,7 @@ export class User {
     private password: string;
     private role: Role;
     private posts: Post[];
-    private comments: Comment[];
+    private comments: Comment[] = [];
     private likes: Like[];
 
     constructor(
@@ -38,5 +38,14 @@ export class User {
         const post = new Post(postId, content, this.userId);
         this.posts.push(post);
         return post;
+    };
+
+    public postComment = (
+        commentId: number,
+        content: string,
+        postId: number
+    ): void => {
+        const comment = new Comment(commentId, content, postId, this.userId);
+        this.comments.push(comment);
     };
 }

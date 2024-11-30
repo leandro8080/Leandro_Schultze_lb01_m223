@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
             result.forEach((tweet) => {
                 tweetList.innerHTML += `<section class="flex justify-center">
                     <section
-                        class="border-2 h-auto p-2 w-2/3 hover:cursor-pointer rounded-xl border-sky-500" onclick="window.location.href='/'"
+                        class="border-2 h-auto p-2 w-2/3 hover:cursor-pointer rounded-xl border-sky-500" onclick="window.location.href='/tweets/${tweet.postId}'"
                     >
                         <p class="font-bold">@${tweet.username}</p>
                         <p

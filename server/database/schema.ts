@@ -22,9 +22,11 @@ const comments = `
 CREATE TABLE IF NOT EXISTS comments (
     id INT NOT NULL AUTO_INCREMENT,
     userId INT NOT NULL,
+    postId INT NOT NULL,
     content text NOT NULL,
     PRIMARY KEY (id),
-    FOREIGN KEY (userId) REFERENCES users(id)
+    FOREIGN KEY (userId) REFERENCES users(id),
+    FOREIGN KEY (postId) REFERENCES posts(id)
 );
 `;
 

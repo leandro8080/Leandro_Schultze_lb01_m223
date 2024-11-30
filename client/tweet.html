@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="/style.css" />
+        <title>Mini twitter</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="/getTweet.js"></script>
+    </head>
+    <body
+        class="bg-gray-950 text-white w-screen h-screen font-sans overflow-x-hidden"
+    >
+        <nav class="flex flex-row justify-center gap-6 p-2 text-lg">
+            <a href="/" class="underline underline-offset-4 decoration-sky-500"
+                >Tweets</a
+            >
+            <a href="/" class="text-gray-300 hover:text-white">Profile</a>
+        </nav>
+        <main>
+            <section class="flex flex-col gap-2" id="originalPost"></section>
+            <p
+                id="feedbackText"
+                class="text-red-500 w-full break-all text-sm flex justify-center min-h-10"
+            ></p>
+
+            <section class="flex justify-center">
+                <section
+                    class="border-2 h-auto p-2 w-2/3 rounded-xl border-sky-500 flex gap-3"
+                >
+                    <textarea
+                        id="commentInput"
+                        lang="en"
+                        class="placeholder-gray-300 bg-gray-950 resize-none overflow-hidden w-full h-auto border-none outline-none"
+                        placeholder="Post your reply..."
+                        maxlength="400"
+                        rows="1"
+                        oninput="autoResize(this)"
+                    ></textarea>
+                    <section>
+                        <section
+                            class="h-full w-full flex justify-center flex-col"
+                        >
+                            <button
+                                id="postReplyButton"
+                                class="bg-sky-500 w-20 h-10 px-3 py-1 rounded-xl font-semibold text-lg hover:bg-sky-600"
+                            >
+                                Reply
+                            </button>
+                        </section>
+                    </section>
+                </section>
+            </section>
+            <p
+                id="feedbackText"
+                class="text-red-500 w-full break-all text-sm flex justify-center min-h-10"
+            ></p>
+            <section class="flex flex-col gap-2" id="commentList"></section>
+        </main>
+    </body>
+</html>

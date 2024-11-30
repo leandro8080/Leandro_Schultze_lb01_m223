@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { User } from "../app/user";
 import { Post } from "../app/post";
+import { Comment } from "../app/comment";
 import { query, body, matchedData, validationResult } from "express-validator";
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -15,6 +16,7 @@ export class API {
     jwtSecretKey = process.env.jwtSecretKey;
     loggedInUsers: User[];
     createdPosts: Post[];
+    createdComments: Comment[];
     // Constructor
     constructor(app: Express, db: Database) {
         this.app = app;
@@ -73,10 +75,41 @@ export class API {
                 .withMessage("ID must be a number greater than or equal to 1"),
             this.getTweets
         );
+        this.app.post(
+            "/api/comments",
+            this.verifyToken,
+            body("content")
+                .trim()
+                .notEmpty()
+                .withMessage("Comment is empty")
+                .isString()
+                .withMessage("Comment must be a string")
+                .isLength({ max: 400 })
+                .withMessage("Comment is to long")
+                .escape(),
+            body("postId")
+                .isInt({ min: 1 })
+                .withMessage(
+                    "postId must be a number greater than or equal to 1"
+                ),
+            this.createComment
+        );
+        this.app.get(
+            "/api/comments",
+            this.verifyToken,
+            query("postId")
+                .isInt({ min: 1 })
+                .withMessage(
+                    "postId must be a number greater than or equal to 1"
+                ),
+            this.getComments
+        );
         this.loggedInUsers = [];
 
         this.createdPosts = [];
+        this.createdComments = [];
         this.fillCreatedPosts();
+        this.fillCreatedComments();
     }
     // Methods
 
@@ -161,6 +194,7 @@ export class API {
             const result = await this.db.executeSQL(query);
             const postId = Number(result.insertId);
             const newPost = user.postTweet(postId, content);
+            user.postTweet;
             this.createdPosts.push(newPost);
 
             return res.sendStatus(200);
@@ -181,8 +215,14 @@ export class API {
             if (id) {
                 const numberId = Number(id);
                 const post = await this.getPostById(numberId);
-                if (post) return res.status(200).send(post);
-                return res.status(400).send("Id doesn't exist");
+                if (!post) return res.status(400).send("Id doesn't exist");
+                const user = await this.createUserIfUndefined(post.getUserId);
+                const tweetWithUsername = {
+                    ...post,
+                    username: user.getUsername,
+                };
+
+                return res.status(200).send(tweetWithUsername);
             }
 
             const tweetsWithUsernames = await Promise.all(
@@ -197,6 +237,65 @@ export class API {
                 })
             );
             return res.status(200).send(tweetsWithUsernames.reverse());
+        } catch (e) {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    };
+
+    private createComment = async (
+        req: Request,
+        res: Response
+    ): Promise<any> => {
+        try {
+            const validationRes = validationResult(req);
+            if (!validationRes.isEmpty()) {
+                return res.status(400).send(validationRes.array()[0].msg);
+            }
+
+            const { content, postId } = matchedData(req);
+            const post = await this.createPostIfUndefined(postId);
+            const { userId } = req.body;
+            const user = await this.createUserIfUndefined(Number(userId));
+
+            const query = `INSERT INTO comments (userId, postId, content) VALUES (${userId}, "${postId}", "${content}")`;
+            const result = await this.db.executeSQL(query);
+            const commentId = Number(result.insertId);
+            const newComment = post.addComment(
+                commentId,
+                content,
+                Number(userId)
+            );
+            user.postComment(commentId, content, postId);
+            this.createdComments.push(newComment);
+
+            return res.sendStatus(200);
+        } catch (e) {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    };
+
+    private getComments = async (req: Request, res: Response): Promise<any> => {
+        try {
+            const validationRes = validationResult(req);
+            if (!validationRes.isEmpty()) {
+                return res.status(400).send(validationRes.array()[0].msg);
+            }
+            const { postId } = req.query;
+            const comments = this.getCommentsByPostId(Number(postId));
+            const commentsWithUsername = await Promise.all(
+                comments.map(async (comment: Comment) => {
+                    const user = await this.createUserIfUndefined(
+                        comment.getUserId
+                    );
+                    return {
+                        ...comment,
+                        username: user.getUsername,
+                    };
+                })
+            );
+            return res.status(200).send(commentsWithUsername.reverse());
         } catch (e) {
             console.log(e);
             return res.sendStatus(500);
@@ -230,8 +329,18 @@ export class API {
         return response;
     };
 
+    private getCommentsByPostId = (postId: number): Comment[] | [] => {
+        let result: Comment[] = [];
+        this.createdComments.forEach((comment) => {
+            if (comment.getPostId === postId) {
+                result.push(comment);
+            }
+        });
+        return result;
+    };
+
     private createUserIfUndefined = async (userId: number): Promise<User> => {
-        let user = this.getUserObjectById(userId);
+        let user: User | undefined = this.getUserObjectById(userId);
         if (user === undefined) {
             const posts = await this.getPostsByUserId(userId);
             const query = `SELECT username, password, role FROM users WHERE id = ${userId};`;
@@ -246,6 +355,20 @@ export class API {
         return user;
     };
 
+    private createPostIfUndefined = async (postId: number): Promise<Post> => {
+        let post: Post | undefined = await this.getPostById(postId);
+        if (!post) {
+            const query = `SELECT content, userId FROM posts WHERE id = ${postId};`;
+            const result = await this.db.executeSQL(query);
+            const content = result[0].content;
+            const userId = result[0].userId;
+            post = new Post(postId, content, userId);
+            this.createdPosts.push(post);
+        }
+
+        return post;
+    };
+
     private fillCreatedPosts = async (): Promise<void> => {
         const query = `SELECT id, userId, content FROM posts`;
         const response = await this.db.executeSQL(query);
@@ -253,6 +376,22 @@ export class API {
             const user = await this.createUserIfUndefined(post.userId);
             const newPost = user.postTweet(post.id, post.content);
             if (newPost) this.createdPosts.push(newPost);
+        });
+    };
+
+    private fillCreatedComments = async (): Promise<void> => {
+        const query = `SELECT id, userId, content, postId FROM comments`;
+        const response = await this.db.executeSQL(query);
+        response.forEach(async (comment: any) => {
+            const user = await this.createUserIfUndefined(comment.userId);
+            const post = await this.createPostIfUndefined(comment.postId);
+            const newComment = post.addComment(
+                comment.id,
+                comment.content,
+                comment.userId
+            );
+            user.postComment(comment.id, comment.content, comment.postId);
+            if (newComment) this.createdComments.push(newComment);
         });
     };
 
