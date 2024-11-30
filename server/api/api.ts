@@ -19,7 +19,6 @@ export class API {
     constructor(app: Express, db: Database) {
         this.app = app;
         this.db = db;
-        this.app.get("/hello", this.sayHello);
         this.app.post(
             "/api/login",
             body("username")
@@ -75,9 +74,6 @@ export class API {
         this.fillCreatedPosts();
     }
     // Methods
-    private sayHello(req: Request, res: Response) {
-        res.send("Hello There!");
-    }
 
     private login = async (req: Request, res: Response): Promise<any> => {
         try {

@@ -70,7 +70,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     tweetInput.addEventListener("keydown", async (event) => {
-        if (event.key === "Enter") createTweet();
+        if (event.key === "Enter") {
+            event.preventDefault();
+            createTweet();
+        }
     });
 
     getTweets();
