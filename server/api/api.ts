@@ -32,6 +32,8 @@ export class API {
             body("username")
                 .notEmpty()
                 .withMessage("Username is empty")
+                .matches(/^\S+$/)
+                .withMessage("Username can't contain spaces")
                 .isString()
                 .withMessage("Username must be a string")
                 .isLength({ max: 20 })
@@ -43,7 +45,9 @@ export class API {
                 .escape(),
             body("password")
                 .isLength({ min: 8 })
-                .withMessage("Password must be at least 8 characters"),
+                .withMessage("Password must be at least 8 characters")
+                .matches(/^\S+$/)
+                .withMessage("Password can't contain spaces"),
             this.register
         );
         this.app.post(
