@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import { User } from "../app/user";
 import { Post } from "../app/post";
 import { Comment } from "../app/comment";
+import { Like } from "../app/like";
 import { query, body, matchedData, validationResult } from "express-validator";
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -104,12 +105,35 @@ export class API {
                 ),
             this.getComments
         );
+        this.app.post(
+            "/api/likes",
+            this.verifyToken,
+            body("postId")
+                .isInt({ min: 1 })
+                .withMessage(
+                    "postId must be a number greater than or equal to 1"
+                ),
+            body("isPositive")
+                .isBoolean()
+                .withMessage("isPositive must be a boolean"),
+            this.setLike
+        );
+        this.app.get(
+            "/api/likes",
+            this.verifyToken,
+            query("postId")
+                .isInt({ min: 1 })
+                .withMessage(
+                    "postId must be a number greater than or equal to 1"
+                ),
+            this.getLikes
+        );
         this.loggedInUsers = [];
 
         this.createdPosts = [];
         this.createdComments = [];
         this.fillCreatedPosts();
-        this.fillCreatedComments();
+        //this.fillCreatedComments();
     }
     // Methods
 
@@ -295,7 +319,64 @@ export class API {
                     };
                 })
             );
-            return res.status(200).send(commentsWithUsername.reverse());
+            return res.status(200).send(commentsWithUsername);
+        } catch (e) {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    };
+
+    private setLike = async (req: Request, res: Response): Promise<any> => {
+        try {
+            const validationRes = validationResult(req);
+            if (!validationRes.isEmpty()) {
+                return res.status(400).send(validationRes.array()[0].msg);
+            }
+
+            const { postId, isPositive } = matchedData(req);
+            const { userId } = req.body;
+
+            const selectQuery = `SELECT * FROM likes WHERE postId = ${postId} AND userId = ${userId};`;
+            const existingLikes = await this.db.executeSQL(selectQuery);
+            if (existingLikes.length > 0) {
+                const deleteLikeQuery = `DELETE FROM likes WHERE postId = ${postId} AND userId = ${userId};`;
+                await this.db.executeSQL(deleteLikeQuery);
+                if (existingLikes[0].isPositive === Number(isPositive))
+                    return res.sendStatus(200);
+            }
+
+            const createLikeQuery = `INSERT INTO likes (postId, userid, isPositive) VALUES (${postId}, ${userId}, ${isPositive});`;
+            const result = await this.db.executeSQL(createLikeQuery);
+            const likeId = Number(result.insertId);
+            const post = await this.createPostIfUndefined(postId);
+            post.addLike(likeId, Number(userId), isPositive);
+            return res.sendStatus(200);
+        } catch (e) {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    };
+
+    private getLikes = async (req: Request, res: Response): Promise<any> => {
+        try {
+            const validationRes = validationResult(req);
+            if (!validationRes.isEmpty()) {
+                return res.status(400).send(validationRes.array()[0].msg);
+            }
+
+            const { postId } = matchedData(req);
+            const { userId } = req.body;
+
+            const user = await this.createUserIfUndefined(userId);
+            const post = await this.createPostIfUndefined(Number(postId));
+
+            const likeAmount = post.getLikeAmount;
+            const dislikeAmount = post.getDislikeAmount;
+            type HasLiked = boolean | null; // True is like, false dislike and null not liked or disliked
+            const hasLikedWith: HasLiked = post.userHasLikedAs(user.getUserId);
+            return res
+                .status(200)
+                .send({ likeAmount, dislikeAmount, hasLikedWith });
         } catch (e) {
             console.log(e);
             return res.sendStatus(500);
@@ -362,15 +443,33 @@ export class API {
             const result = await this.db.executeSQL(query);
             const content = result[0].content;
             const userId = result[0].userId;
-            post = new Post(postId, content, userId);
+            const likes = await this.getLikesByPostId(postId);
+            post = new Post(postId, content, userId, likes);
             this.createdPosts.push(post);
         }
 
         return post;
     };
 
+    private getLikesByPostId = async (postId: number): Promise<Like[] | []> => {
+        const query = `SELECT id, userId, isPositive FROM likes WHERE postid = ${postId};`;
+        const result = await this.db.executeSQL(query);
+        const likeList: Like[] = [];
+        result.forEach((like) => {
+            const newLike = new Like(
+                like.id,
+                like.isPositive,
+                like.userId,
+                like.postId
+            );
+            likeList.push(newLike);
+        });
+
+        return likeList;
+    };
+
     private fillCreatedPosts = async (): Promise<void> => {
-        const query = `SELECT id, userId, content FROM posts`;
+        const query = `SELECT id, userId, content FROM posts ORDER BY id asc`;
         const response = await this.db.executeSQL(query);
         response.forEach(async (post: any) => {
             const user = await this.createUserIfUndefined(post.userId);
@@ -380,7 +479,7 @@ export class API {
     };
 
     private fillCreatedComments = async (): Promise<void> => {
-        const query = `SELECT id, userId, content, postId FROM comments`;
+        const query = `SELECT id, userId, content, postId FROM comments ORDER BY id asc`;
         const response = await this.db.executeSQL(query);
         response.forEach(async (comment: any) => {
             const user = await this.createUserIfUndefined(comment.userId);
