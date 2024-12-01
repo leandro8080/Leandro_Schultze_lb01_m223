@@ -13,6 +13,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const postReplyButton = document.getElementById("postReplyButton");
     const originalPost = document.getElementById("originalPost");
 
+    const likeButton = document.getElementById("likeButton");
+    const likeText = document.getElementById("likeText");
+    const dislikeButton = document.getElementById("dislikeButton");
+    const dislikeText = document.getElementById("dislikeText");
+
     const getTweet = async () => {
         const id = window.location.pathname.split("/")[2];
         const response = await fetch(`/api/tweets?id=${id}`, {
@@ -50,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
             result.forEach((comment) => {
                 commentList.innerHTML += `<section class="flex justify-center">
                     <section
-                        class="border-2 h-auto p-2 w-2/3 hover:cursor-pointer rounded-xl border-sky-500" onclick="window.location.href='/'"
+                        class="border-2 h-auto p-2 w-2/3 rounded-xl border-sky-500""
                     >
                         <p class="font-bold">@${comment.username}</p>
                         <p
@@ -70,7 +75,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const createComment = async () => {
         const postId = window.location.pathname.split("/")[2];
         const content = tweetInput.value;
-        console.log(content);
         const response = await fetch("/api/comments", {
             method: "POST",
             headers: {
@@ -93,6 +97,56 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    const getLikes = async () => {
+        const postId = window.location.pathname.split("/")[2];
+        const response = await fetch(`/api/likes?postId=${postId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.status === 200) {
+            const result = await response.json();
+            likeText.innerText = result.likeAmount;
+            dislikeText.innerText = result.dislikeAmount;
+            if (result.hasLikedWith === true) {
+                likeButton.classList.add("text-sky-600");
+                likeButton.classList.remove("text-white");
+                dislikeButton.classList.remove("text-sky-600");
+                dislikeButton.classList.add("text-white");
+            } else if (result.hasLikedWith === false) {
+                dislikeButton.classList.add("text-sky-600");
+                dislikeButton.classList.remove("text-white");
+                likeButton.classList.remove("text-sky-600");
+                likeButton.classList.add("text-white");
+            } else {
+                likeButton.classList.remove("text-sky-600");
+                likeButton.classList.add("text-white");
+                dislikeButton.classList.remove("text-sky-600");
+                dislikeButton.classList.add("text-white");
+            }
+        } else {
+            const result = await response.text();
+            feedbackText.innerText = result;
+        }
+    };
+
+    const setLike = async (isPositive) => {
+        const postId = window.location.pathname.split("/")[2];
+        const response = await fetch("/api/likes", {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ postId, isPositive }),
+        });
+
+        if (response.status === 200) getLikes();
+        else {
+            const result = await response.text();
+            feedbackText.innerText = result;
+        }
+    };
+
     postReplyButton.addEventListener("click", async () => {
         createComment();
     });
@@ -104,6 +158,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    likeButton.addEventListener("click", async () => {
+        setLike(true);
+    });
+
+    dislikeButton.addEventListener("click", async () => {
+        setLike(false);
+    });
+
     getTweet();
     getComments();
+    getLikes();
 });

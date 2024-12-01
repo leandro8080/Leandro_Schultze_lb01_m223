@@ -133,7 +133,7 @@ export class API {
         this.createdPosts = [];
         this.createdComments = [];
         this.fillCreatedPosts();
-        //this.fillCreatedComments();
+        this.fillCreatedComments();
     }
     // Methods
 
@@ -336,11 +336,14 @@ export class API {
             const { postId, isPositive } = matchedData(req);
             const { userId } = req.body;
 
-            const selectQuery = `SELECT * FROM likes WHERE postId = ${postId} AND userId = ${userId};`;
+            const selectQuery = `SELECT id, isPositive FROM likes WHERE postId = ${postId} AND userId = ${userId};`;
             const existingLikes = await this.db.executeSQL(selectQuery);
+            const post = await this.createPostIfUndefined(Number(postId));
             if (existingLikes.length > 0) {
                 const deleteLikeQuery = `DELETE FROM likes WHERE postId = ${postId} AND userId = ${userId};`;
                 await this.db.executeSQL(deleteLikeQuery);
+                const newLike = existingLikes[0];
+                post.removeLike(newLike.id);
                 if (existingLikes[0].isPositive === Number(isPositive))
                     return res.sendStatus(200);
             }
@@ -348,7 +351,6 @@ export class API {
             const createLikeQuery = `INSERT INTO likes (postId, userid, isPositive) VALUES (${postId}, ${userId}, ${isPositive});`;
             const result = await this.db.executeSQL(createLikeQuery);
             const likeId = Number(result.insertId);
-            const post = await this.createPostIfUndefined(postId);
             post.addLike(likeId, Number(userId), isPositive);
             return res.sendStatus(200);
         } catch (e) {
@@ -372,7 +374,7 @@ export class API {
 
             const likeAmount = post.getLikeAmount;
             const dislikeAmount = post.getDislikeAmount;
-            type HasLiked = boolean | null; // True is like, false dislike and null not liked or disliked
+            type HasLiked = boolean | null; // True is like, false dislike and null not liked or disliked5t55trgg
             const hasLikedWith: HasLiked = post.userHasLikedAs(user.getUserId);
             return res
                 .status(200)
@@ -438,7 +440,7 @@ export class API {
 
     private createPostIfUndefined = async (postId: number): Promise<Post> => {
         let post: Post | undefined = await this.getPostById(postId);
-        if (!post) {
+        if (post === undefined) {
             const query = `SELECT content, userId FROM posts WHERE id = ${postId};`;
             const result = await this.db.executeSQL(query);
             const content = result[0].content;
@@ -452,7 +454,7 @@ export class API {
     };
 
     private getLikesByPostId = async (postId: number): Promise<Like[] | []> => {
-        const query = `SELECT id, userId, isPositive FROM likes WHERE postid = ${postId};`;
+        const query = `SELECT id, userId, postId, isPositive FROM likes WHERE postid = ${postId};`;
         const result = await this.db.executeSQL(query);
         const likeList: Like[] = [];
         result.forEach((like) => {
@@ -473,7 +475,7 @@ export class API {
         const response = await this.db.executeSQL(query);
         response.forEach(async (post: any) => {
             const user = await this.createUserIfUndefined(post.userId);
-            const newPost = user.postTweet(post.id, post.content);
+            const newPost = await this.createPostIfUndefined(post.id);
             if (newPost) this.createdPosts.push(newPost);
         });
     };
@@ -496,12 +498,12 @@ export class API {
 
     private getPostById = async (postId: number): Promise<Post | undefined> => {
         let result: Post | undefined = undefined;
-        this.createdPosts.forEach((post) => {
+        for (const post of this.createdPosts) {
             if (post.getPostId === postId) {
                 result = post;
-                return;
+                break;
             }
-        });
+        }
         return result;
     };
 

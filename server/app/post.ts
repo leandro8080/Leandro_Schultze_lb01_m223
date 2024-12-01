@@ -80,4 +80,14 @@ export class Post {
         const like = new Like(likeId, isPositive, userId, this.postId);
         this.likes.push(like);
     };
+
+    public removeLike = (likeId: number) => {
+        for (let i: number = 0; i < this.likes.length; i++) {
+            console.log(i);
+            if (this.likes[i].getLikeId === likeId) {
+                this.likes.splice(i, 1);
+                break;
+            }
+        }
+    };
 }
