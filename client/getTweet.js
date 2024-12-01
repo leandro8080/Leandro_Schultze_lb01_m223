@@ -2,9 +2,32 @@ function autoResize(textarea) {
     textarea.style.height = "auto";
     textarea.style.height = textarea.scrollHeight + "px";
 }
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     const token = localStorage.getItem("token");
     if (!token) window.location.href = "/login";
+
+    const getUserRole = async () => {
+        const response = await fetch("/api/role", {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const result = await response.text();
+        if (response.status === 200) return result;
+        return "user";
+    };
+
+    const getUserId = async () => {
+        const response = await fetch("/api/userId", {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const result = await response.json();
+        if (response.status === 200) return result.userId;
+        window.location.href = "/login";
+    };
+
+    const userRole = await getUserRole();
+    const userId = await getUserId();
 
     const commentList = document.getElementById("commentList");
     const feedbackText = document.getElementById("feedbackText");
@@ -18,6 +41,29 @@ document.addEventListener("DOMContentLoaded", () => {
     const dislikeButton = document.getElementById("dislikeButton");
     const dislikeText = document.getElementById("dislikeText");
 
+    const editTweet = async (newContent) => {
+        const postId = window.location.pathname.split("/")[2];
+        const response = await fetch("/api/tweets", {
+            method: "PUT",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ postId, newContent }),
+        });
+
+        const result = await response.text();
+        if (response.status == 200) {
+            feedbackText.innerText = "Successfully edited tweet";
+            feedbackText.classList.remove("text-red-500");
+            feedbackText.classList.add("text-green-500");
+        } else {
+            feedbackText.classList.add("text-red-500");
+            feedbackText.classList.remove("text-green-500");
+            feedbackText.innerText = result;
+        }
+    };
+
     const getTweet = async () => {
         const id = window.location.pathname.split("/")[2];
         const response = await fetch(`/api/tweets?id=${id}`, {
@@ -25,9 +71,55 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         if (response.status === 200) {
             const result = await response.json();
-            originalPost.innerHTML += `<section class="flex justify-center">
+            if (result.userId === userId || userRole !== "user") {
+                originalPost.innerHTML += `<section class="flex justify-center">
+                <section
+                    class="border-2 h-auto p-2 w-2/3 rounded-xl border-sky-500"
+                >
+                    <p class="font-bold">@${result.username}</p>
+                    <section class="flex gap-3">
+                        <textarea
+                            id="editInput"
+                            lang="en"
+                            class="placeholder-gray-300 bg-gray-950 resize-none overflow-hidden w-full h-auto border-none outline-none"
+                            placeholder="${result.content}"
+                            maxlength="400"
+                            rows="1"
+                            oninput="autoResize(this)"
+                        >${result.content}</textarea>
+                        <section>
+                            <section
+                                class="h-full w-full flex justify-center flex-col"
+                            >
+                                <button
+                                    id="editButton"
+                                    class="bg-sky-500 w-20 h-10 px-3 py-1 rounded-xl font-semibold text-lg hover:bg-sky-600"
+                                >
+                                    Edit
+                                </button>
+                            </section>
+                        </section>
+                    </section>
+                </section>
+            </section>`;
+                const editInput = document.getElementById("editInput");
+                editInput.addEventListener("keydown", async (event) => {
+                    if (event.key === "Enter") {
+                        event.preventDefault();
+                        const newContent = editInput.value;
+                        await editTweet(newContent);
+                    }
+                });
+                document
+                    .getElementById("editButton")
+                    .addEventListener("click", async () => {
+                        const newContent = editInput.value;
+                        await editTweet(newContent);
+                    });
+            } else {
+                originalPost.innerHTML += `<section class="flex justify-center">
                     <section
-                        class="border-2 h-auto p-2 w-2/3 hover:cursor-pointer rounded-xl border-sky-500" onclick="window.location.href='/'"
+                        class="border-2 h-auto p-2 w-2/3 rounded-xl border-sky-500"
                     >
                         <p class="font-bold">@${result.username}</p>
                         <p
@@ -37,6 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </p>
                     </section>
                 </section>`;
+            }
         } else {
             const result = await response.text();
             feedbackText.innerText = result;

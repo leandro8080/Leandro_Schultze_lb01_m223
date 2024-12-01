@@ -63,7 +63,7 @@ export class API {
                 .isString()
                 .withMessage("Tweet must be a string")
                 .isLength({ max: 400 })
-                .withMessage("Post is to long")
+                .withMessage("Tweet is to long")
                 .escape(),
             this.postTweet
         );
@@ -75,6 +75,23 @@ export class API {
                 .isInt({ min: 1 })
                 .withMessage("ID must be a number greater than or equal to 1"),
             this.getTweets
+        );
+        this.app.put(
+            "/api/tweets",
+            this.verifyToken,
+            body("postId")
+                .isInt({ min: 1 })
+                .withMessage("ID must be a number greater than or equal to 1"),
+            body("newContent")
+                .trim()
+                .notEmpty()
+                .withMessage("Tweet is empty")
+                .isString()
+                .withMessage("Tweet must be a string")
+                .isLength({ max: 400 })
+                .withMessage("Tweet is to long")
+                .escape(),
+            this.editTweet
         );
         this.app.post(
             "/api/comments",
@@ -128,6 +145,8 @@ export class API {
                 ),
             this.getLikes
         );
+        this.app.get("/api/role", this.verifyToken, this.getRole);
+        this.app.get("/api/userId", this.verifyToken, this.getUserId);
         this.loggedInUsers = [];
 
         this.createdPosts = [];
@@ -228,6 +247,37 @@ export class API {
         }
     };
 
+    private editTweet = async (req: Request, res: Response): Promise<any> => {
+        try {
+            const validationRes = validationResult(req);
+            if (!validationRes.isEmpty()) {
+                return res.status(400).send(validationRes.array()[0].msg);
+            }
+
+            const { postId, newContent } = matchedData(req);
+            const { userId } = req.body;
+
+            const post = await this.getPostById(Number(postId));
+            const user = await this.createUserIfUndefined(userId);
+
+            if (!post)
+                return res.status(400).send("Post with postId doesn't exist");
+
+            if (post.getContent === newContent)
+                return res.status(400).send("Tweet didn't change");
+            if (userId === post.getUserId || user.getRole !== "user") {
+                const updateQuery = `UPDATE posts SET content = "${newContent}" WHERE id = ${postId}`;
+                await this.db.executeSQL(updateQuery);
+                post.editPost(newContent);
+                return res.sendStatus(200);
+            }
+            return res.sendStatus(401);
+        } catch (e) {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    };
+
     private getTweets = async (req: Request, res: Response): Promise<any> => {
         try {
             const validationRes = validationResult(req);
@@ -238,8 +288,7 @@ export class API {
 
             if (id) {
                 const numberId = Number(id);
-                const post = await this.getPostById(numberId);
-                if (!post) return res.status(400).send("Id doesn't exist");
+                const post = await this.createPostIfUndefined(numberId);
                 const user = await this.createUserIfUndefined(post.getUserId);
                 const tweetWithUsername = {
                     ...post,
@@ -278,7 +327,9 @@ export class API {
             }
 
             const { content, postId } = matchedData(req);
-            const post = await this.createPostIfUndefined(postId);
+            const post = await this.getPostById(Number(postId));
+            if (!post)
+                return res.status(400).send("Post with postId doesn't exist");
             const { userId } = req.body;
             const user = await this.createUserIfUndefined(Number(userId));
 
@@ -338,7 +389,9 @@ export class API {
 
             const selectQuery = `SELECT id, isPositive FROM likes WHERE postId = ${postId} AND userId = ${userId};`;
             const existingLikes = await this.db.executeSQL(selectQuery);
-            const post = await this.createPostIfUndefined(Number(postId));
+            const post = await this.getPostById(Number(postId));
+            if (!post)
+                return res.status(400).send("Post with postId doesn't exist");
             if (existingLikes.length > 0) {
                 const deleteLikeQuery = `DELETE FROM likes WHERE postId = ${postId} AND userId = ${userId};`;
                 await this.db.executeSQL(deleteLikeQuery);
@@ -370,7 +423,9 @@ export class API {
             const { userId } = req.body;
 
             const user = await this.createUserIfUndefined(userId);
-            const post = await this.createPostIfUndefined(Number(postId));
+            const post = await this.getPostById(Number(postId));
+            if (!post)
+                return res.status(400).send("Post with postId doesn't exist");
 
             const likeAmount = post.getLikeAmount;
             const dislikeAmount = post.getDislikeAmount;
@@ -379,6 +434,28 @@ export class API {
             return res
                 .status(200)
                 .send({ likeAmount, dislikeAmount, hasLikedWith });
+        } catch (e) {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    };
+
+    private getRole = async (req: Request, res: Response): Promise<any> => {
+        try {
+            const { userId } = req.body;
+            const user = await this.createUserIfUndefined(userId);
+            const role = user.getRole;
+            return res.status(200).send(role);
+        } catch (e) {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    };
+
+    private getUserId = async (req: Request, res: Response): Promise<any> => {
+        try {
+            const { userId } = req.body;
+            return res.status(200).send({ userId: userId });
         } catch (e) {
             console.log(e);
             return res.sendStatus(500);
@@ -474,9 +551,7 @@ export class API {
         const query = `SELECT id, userId, content FROM posts ORDER BY id asc`;
         const response = await this.db.executeSQL(query);
         response.forEach(async (post: any) => {
-            const user = await this.createUserIfUndefined(post.userId);
-            const newPost = await this.createPostIfUndefined(post.id);
-            if (newPost) this.createdPosts.push(newPost);
+            await this.createPostIfUndefined(post.id);
         });
     };
 

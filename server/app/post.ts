@@ -48,6 +48,10 @@ export class Post {
         return this.likes;
     }
 
+    public get getContent(): string {
+        return this.content;
+    }
+
     public userHasLikedAs(userId: number): boolean | null {
         let userLike: Like | undefined;
         this.likes.forEach((like) => {
@@ -81,9 +85,12 @@ export class Post {
         this.likes.push(like);
     };
 
-    public removeLike = (likeId: number) => {
+    public editPost = (content: string): void => {
+        this.content = content;
+    };
+
+    public removeLike = (likeId: number): void => {
         for (let i: number = 0; i < this.likes.length; i++) {
-            console.log(i);
             if (this.likes[i].getLikeId === likeId) {
                 this.likes.splice(i, 1);
                 break;

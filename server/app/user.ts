@@ -34,6 +34,10 @@ export class User {
         return this.username;
     }
 
+    public get getRole(): Role {
+        return this.role;
+    }
+
     public postTweet = (postId: number, content: string): Post => {
         const post = new Post(postId, content, this.userId, []);
         this.posts.push(post);

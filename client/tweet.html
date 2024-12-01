@@ -21,7 +21,11 @@
         <main>
             <section class="flex flex-col gap-2" id="originalPost"></section>
             <section class="flex justify-center">
-                <section class="w-2/3 flex p-3 gap-5 justify-end">
+                <section class="w-2/3 flex gap-5 justify-end pb-5">
+                    <p
+                        id="feedbackText"
+                        class="text-red-500 w-full break-all text-sm flex justify-center min-h-10 p-3"
+                    ></p>
                     <button
                         id="likeButton"
                         class="flex items-center gap-2 text-white"
@@ -123,14 +127,10 @@
                     </button>
                 </section>
             </section>
-            <p
-                id="feedbackText"
-                class="text-red-500 w-full break-all text-sm flex justify-center min-h-10"
-            ></p>
 
             <section class="flex justify-center">
                 <section
-                    class="border-2 h-auto p-2 w-2/3 rounded-xl border-sky-500 flex gap-3"
+                    class="border-2 h-auto p-2 w-2/3 rounded-xl border-sky-500 flex gap-3 mb-10"
                 >
                     <textarea
                         id="commentInput"
@@ -155,10 +155,6 @@
                     </section>
                 </section>
             </section>
-            <p
-                id="feedbackText"
-                class="text-red-500 w-full break-all text-sm flex justify-center min-h-10"
-            ></p>
             <section class="flex flex-col gap-2" id="commentList"></section>
         </main>
     </body>
