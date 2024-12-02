@@ -7,8 +7,12 @@ import { Post } from "../app/post";
 import { Comment } from "../app/comment";
 import { Like } from "../app/like";
 import { query, body, matchedData, validationResult } from "express-validator";
+import aesEncryption from "aes-encryption";
 import * as dotenv from "dotenv";
 dotenv.config();
+
+const aes = new aesEncryption();
+aes.setSecretKey(process.env.AESSECRETKEY);
 
 export class API {
     // Properties
@@ -92,6 +96,16 @@ export class API {
                 .withMessage("Tweet is to long")
                 .escape(),
             this.editTweet
+        );
+        this.app.delete(
+            "/api/tweets",
+            this.verifyToken,
+            query("postId")
+                .isInt({ min: 1 })
+                .withMessage(
+                    "postId must be a number greater than or equal to 1"
+                ),
+            this.deleteTweet
         );
         this.app.post(
             "/api/comments",
@@ -272,6 +286,30 @@ export class API {
                 return res.sendStatus(200);
             }
             return res.sendStatus(401);
+        } catch (e) {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    };
+
+    private deleteTweet = async (req: Request, res: Response): Promise<any> => {
+        try {
+            const validationRes = validationResult(req);
+            if (!validationRes.isEmpty()) {
+                return res.status(400).send(validationRes.array()[0].msg);
+            }
+
+            const { postId } = matchedData(req);
+
+            const post = this.getPostById(postId);
+            if (!post) return res.status(400).send("Post doesn't exist");
+
+            const query = `DELETE FROM posts WHERE id = ${postId};`;
+
+            await this.db.executeSQL(query);
+            this.createdPosts.splice(postId, 1);
+
+            return res.sendStatus(200);
         } catch (e) {
             console.log(e);
             return res.sendStatus(500);
