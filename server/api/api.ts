@@ -143,6 +143,16 @@ export class API {
                 .escape(),
             this.editComment
         );
+        this.app.delete(
+            "/api/comments",
+            this.verifyToken,
+            query("commentId")
+                .isInt({ min: 1 })
+                .withMessage(
+                    "commentId must be a number greater than or equal to 1"
+                ),
+            this.deleteComment
+        );
         this.app.get(
             "/api/comments",
             this.verifyToken,
@@ -319,14 +329,14 @@ export class API {
             const { postId } = matchedData(req);
 
             const post = this.getPostById(Number(postId));
-            if (!post) return res.status(400).send("Post doesn't exist");
+            if (!post) return res.status(400).send("Tweet doesn't exist");
 
             const query = `DELETE FROM posts WHERE id = ${Number(postId)};`;
 
             await this.db.executeSQL(query);
 
             if (!this.deletePostById(Number(postId)))
-                return res.sendStatus(500);
+                return res.status(400).send("Tweet doesn't exist");
 
             return res.sendStatus(200);
         } catch (e) {
@@ -432,6 +442,34 @@ export class API {
                 return res.sendStatus(200);
             }
             return res.sendStatus(401);
+        } catch (e) {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    };
+
+    private deleteComment = async (
+        req: Request,
+        res: Response
+    ): Promise<any> => {
+        try {
+            const validationRes = validationResult(req);
+            if (!validationRes.isEmpty()) {
+                return res.status(400).send(validationRes.array()[0].msg);
+            }
+
+            const { commentId } = matchedData(req);
+
+            const comment = this.getPostById(Number(commentId));
+            if (!comment) return res.status(400).send("Comment doesn't exist");
+
+            const query = `DELETE FROM comments WHERE id = ${Number(commentId)};`;
+
+            await this.db.executeSQL(query);
+
+            if (!this.deleteByCommentId(Number(commentId)))
+                return res.status(400).send("Comment doesn't exist");
+            return res.sendStatus(200);
         } catch (e) {
             console.log(e);
             return res.sendStatus(500);
@@ -700,6 +738,17 @@ export class API {
         for (let i = 0; i < this.createdComments.length; i++) {
             if (this.createdComments[i].getPostId === commentId) {
                 this.createdComments[i] = newComment;
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    private deleteByCommentId = (commentId: number): boolean => {
+        for (let i = 0; i < this.createdComments.length; i++) {
+            if (this.createdComments[i].getCommentId === commentId) {
+                this.createdComments.splice(i, 1);
                 return true;
             }
         }

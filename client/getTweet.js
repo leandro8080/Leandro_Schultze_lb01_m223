@@ -101,6 +101,26 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     };
 
+    const deleteComment = async (commentId) => {
+        const response = await fetch(`/api/comments?commentId=${commentId}`, {
+            method: "DELETE",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        const result = await response.text();
+        if (response.status === 200) {
+            feedbackText.innerText = "Successfully deleted comment";
+            feedbackText.classList.remove("text-red-500");
+            feedbackText.classList.add("text-green-500");
+            await getComments();
+        } else {
+            feedbackText.classList.add("text-red-500");
+            feedbackText.classList.remove("text-green-500");
+            feedbackText.innerText = result;
+        }
+    };
+
     const getTweet = async () => {
         const id = window.location.pathname.split("/")[2];
         const response = await fetch(`/api/tweets?id=${id}`, {
@@ -220,6 +240,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 class="h-full w-full flex justify-center flex-col gap-3"
                             >
                                 <button
+                                    id="deleteCommentButton${comment.commentId}"
                                     class="bg-red-500 w-20 h-10 px-3 py-1 rounded-xl font-semibold text-lg hover:bg-red-600"
                                 >
                                     Delete
@@ -243,6 +264,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                             `editCommentInput${comment.commentId}`
                         ).value;
                         await editComment(comment.commentId, newContent);
+                    };
+
+                    document.getElementById(
+                        `deleteCommentButton${comment.commentId}`
+                    ).onclick = async function () {
+                        await deleteComment(comment.commentId);
                     };
 
                     autoResize(
