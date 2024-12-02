@@ -301,13 +301,15 @@ export class API {
 
             const { postId } = matchedData(req);
 
-            const post = this.getPostById(postId);
+            const post = this.getPostById(Number(postId));
             if (!post) return res.status(400).send("Post doesn't exist");
 
-            const query = `DELETE FROM posts WHERE id = ${postId};`;
+            const query = `DELETE FROM posts WHERE id = ${Number(postId)};`;
 
             await this.db.executeSQL(query);
-            this.createdPosts.splice(postId, 1);
+
+            if (!this.deletePostById(Number(postId)))
+                return res.sendStatus(500);
 
             return res.sendStatus(200);
         } catch (e) {
@@ -618,6 +620,17 @@ export class API {
             }
         }
         return result;
+    };
+
+    private deletePostById = (postId: number): boolean => {
+        for (let i = 0; i < this.createdPosts.length; i++) {
+            if (this.createdPosts[i].getPostId === postId) {
+                this.createdPosts.splice(i, 1);
+                return true;
+            }
+        }
+
+        return false;
     };
 
     // Middleware

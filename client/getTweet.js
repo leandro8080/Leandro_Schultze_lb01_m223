@@ -64,6 +64,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     };
 
+    const deleteTweet = async () => {
+        const postId = window.location.pathname.split("/")[2];
+        const response = await fetch(`/api/tweets?postId=${postId}`, {
+            method: "DELETE",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        const result = await response.text();
+        if (response.status === 200) window.location.pathname = "/";
+        feedbackText.innerText = result;
+    };
+
     const getTweet = async () => {
         const id = window.location.pathname.split("/")[2];
         const response = await fetch(`/api/tweets?id=${id}`, {
@@ -89,8 +102,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                         >${result.content}</textarea>
                         <section>
                             <section
-                                class="h-full w-full flex justify-center flex-col"
+                                class="h-full w-full flex justify-center flex-col gap-3"
                             >
+                                <button
+                                    id="deleteButton"
+                                    class="bg-red-500 w-20 h-10 px-3 py-1 rounded-xl font-semibold text-lg hover:bg-red-600"
+                                >
+                                    Delete
+                                </button>
                                 <button
                                     id="editButton"
                                     class="bg-sky-500 w-20 h-10 px-3 py-1 rounded-xl font-semibold text-lg hover:bg-sky-600"
@@ -115,6 +134,12 @@ document.addEventListener("DOMContentLoaded", async () => {
                     .addEventListener("click", async () => {
                         const newContent = editInput.value;
                         await editTweet(newContent);
+                    });
+
+                document
+                    .getElementById("deleteButton")
+                    .addEventListener("click", async () => {
+                        await deleteTweet();
                     });
             } else {
                 originalPost.innerHTML += `<section class="flex justify-center">
