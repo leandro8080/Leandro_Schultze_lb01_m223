@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS posts (
     userId INT NOT NULL,
     content text NOT NULL,
     PRIMARY KEY (id),
-    FOREIGN KEY (userId) REFERENCES users(id)
+    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
 );
 `;
 
@@ -25,8 +25,8 @@ CREATE TABLE IF NOT EXISTS comments (
     postId INT NOT NULL,
     content text NOT NULL,
     PRIMARY KEY (id),
-    FOREIGN KEY (userId) REFERENCES users(id),
-    FOREIGN KEY (postId) REFERENCES posts(id)
+    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (postId) REFERENCES posts(id) ON DELETE CASCADE
 );
 `;
 
@@ -37,8 +37,8 @@ CREATE TABLE IF NOT EXISTS likes (
     userId INT NOT NULL,
     isPositive boolean NOT NULL,
     PRIMARY KEY (id),
-    FOREIGN KEY (postId) REFERENCES posts(id),
-    FOREIGN KEY (userId) REFERENCES users(id)
+    FOREIGN KEY (postId) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
 );
 `;
 
