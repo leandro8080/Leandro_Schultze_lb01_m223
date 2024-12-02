@@ -65,6 +65,11 @@ class Backend {
             const __dirname = resolve(dirname(""));
             res.sendFile(__dirname + "/client/tweet.html");
         });
+
+        this._app.get("/profile", (req: Request, res: Response) => {
+            const __dirname = resolve(dirname(""));
+            res.sendFile(__dirname + "/client/profile.html");
+        });
     }
 
     private startServer(): void {

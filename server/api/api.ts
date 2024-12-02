@@ -34,6 +34,7 @@ export class API {
                 .escape(),
             this.login
         );
+        this.app.delete("/api/logout", this.verifyToken, this.logout);
         this.app.post(
             "/api/register",
             body("username")
@@ -56,6 +57,35 @@ export class API {
                 .matches(/^\S+$/)
                 .withMessage("Password can't contain spaces"),
             this.register
+        );
+        this.app.put(
+            "/api/username",
+            this.verifyToken,
+            body("newUsername")
+                .notEmpty()
+                .withMessage("Username is empty")
+                .matches(/^\S+$/)
+                .withMessage("Username can't contain spaces")
+                .isString()
+                .withMessage("Username must be a string")
+                .isLength({ max: 20 })
+                .withMessage("Username is to long")
+                .custom(async (username) => {
+                    if (!(await this.usernameExists(username)))
+                        throw new Error("Username already in use");
+                })
+                .escape(),
+            this.changeUsername
+        );
+        this.app.put(
+            "/api/password",
+            this.verifyToken,
+            body("newPassword")
+                .isLength({ min: 8 })
+                .withMessage("Password must be at least 8 characters")
+                .matches(/^\S+$/)
+                .withMessage("Password can't contain spaces"),
+            this.changePassword
         );
         this.app.post(
             "/api/tweets",
@@ -242,6 +272,18 @@ export class API {
         }
     };
 
+    private logout = async (req: Request, res: Response): Promise<any> => {
+        try {
+            const { userId } = req.body;
+
+            this.removeUserFromList(Number(userId));
+            return res.sendStatus(200); // I always return 200, because the user doesn't need to be delted, if it doesn't exist
+        } catch (e) {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    };
+
     private register = async (req: Request, res: Response): Promise<any> => {
         try {
             const validationRes = validationResult(req);
@@ -255,6 +297,62 @@ export class API {
 
             const query = `INSERT INTO users (username, password, role) VALUES ("${username}", "${await hashedPassword}", "user");`;
             this.db.executeSQL(query);
+
+            return res.sendStatus(200);
+        } catch (e) {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    };
+
+    private changeUsername = async (
+        req: Request,
+        res: Response
+    ): Promise<any> => {
+        try {
+            const validationRes = validationResult(req);
+            if (!validationRes.isEmpty()) {
+                return res.status(400).send(validationRes.array()[0].msg);
+            }
+
+            const { newUsername } = matchedData(req);
+            const { userId } = req.body;
+
+            const user = this.getUserObjectById(Number(userId));
+            if (!user) return res.status(400).send("User doesn't exist");
+
+            const query = `UPDATE users SET username = "${newUsername}" WHERE id = ${Number(userId)};`;
+            await this.db.executeSQL(query);
+            user.setUsername(newUsername);
+
+            return res.sendStatus(200);
+        } catch (e) {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    };
+
+    private changePassword = async (
+        req: Request,
+        res: Response
+    ): Promise<any> => {
+        try {
+            const validationRes = validationResult(req);
+            if (!validationRes.isEmpty()) {
+                return res.status(400).send(validationRes.array()[0].msg);
+            }
+
+            const { newPassword } = matchedData(req);
+            const { userId } = req.body;
+
+            const user = this.getUserObjectById(Number(userId));
+            if (!user) return res.status(400).send("User doesn't exist");
+
+            const newHashedPassword = await bcrypt.hash(newPassword, 10);
+
+            const query = `UPDATE users SET password = "${newHashedPassword}" WHERE id = ${Number(userId)};`;
+            await this.db.executeSQL(query);
+            user.setPassword(newHashedPassword);
 
             return res.sendStatus(200);
         } catch (e) {
@@ -749,6 +847,17 @@ export class API {
         for (let i = 0; i < this.createdComments.length; i++) {
             if (this.createdComments[i].getCommentId === commentId) {
                 this.createdComments.splice(i, 1);
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    private removeUserFromList = (userId: number): boolean => {
+        for (let i = 0; i < this.loggedInUsers.length; i++) {
+            if (this.loggedInUsers[i].getUserId === userId) {
+                this.loggedInUsers.splice(i, 1);
                 return true;
             }
         }

@@ -52,4 +52,12 @@ export class User {
         const comment = new Comment(commentId, content, postId, this.userId);
         this.comments.push(comment);
     };
+
+    public setUsername = (newUsername: string): void => {
+        this.username = newUsername;
+    };
+
+    public setPassword = (newPassword: string): void => {
+        this.password = newPassword;
+    };
 }

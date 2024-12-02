@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="/style.css" />
+        <title>Profile</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="profile.js"></script>
+    </head>
+    <body
+        class="bg-gray-950 text-white w-screen h-screen font-sans overflow-x-hidden"
+    >
+        <nav class="fixed h-screen w-1/6 pr-10">
+            <section
+                class="flex justify-center w-full border-r-2 h-screen border-sky-500 pt-4"
+            >
+                <section class="flex flex-col">
+                    <a
+                        href="/"
+                        class="underline underline-offset-4 decoration-sky-500"
+                        >Settings</a
+                    ><a href="/" class="text-gray-300 hover:text-white"
+                        >My tweets</a
+                    ><a href="/" class="text-gray-300 hover:text-white"
+                        >My replies
+                    </a>
+                </section>
+            </section>
+        </nav>
+        <nav class="flex flex-row justify-center gap-6 p-2 text-lg">
+            <a href="/" class="text-gray-300 hover:text-white">Tweets</a>
+            <a
+                href="/profile"
+                class="underline underline-offset-4 decoration-sky-500"
+                >Profile</a
+            >
+        </nav>
+        <main>
+            <section class="flex items-center flex-col">
+                <section
+                    class="border-2 h-auto p-2 w-2/3 rounded-xl border-sky-500 flex flex-col justify-around"
+                >
+                    <section
+                        class="flex justify-around w-full h-full flex-wrap"
+                    >
+                        <section class="flex flex-col min-w-1/4">
+                            <h1 class="font-bold text-2xl text-sky-500">
+                                Change Username
+                            </h1>
+                            <label>New Username</label>
+                            <input
+                                autocomplete="off"
+                                id="newUsernameInput"
+                                class="border bg-gray-950 rounded-md h-10 p-1"
+                                placeholder="New Username"
+                                type="text"
+                            />
+                            <br />
+
+                            <button
+                                class="bg-sky-500 w-24 h-10 px-3 py-1 rounded-xl font-semibold text-lg hover:bg-sky-600"
+                                id="changeUsernameButton"
+                            >
+                                Confirm
+                            </button>
+                        </section>
+                        <section class="flex flex-col min-w-1/4">
+                            <h1 class="font-bold text-2xl text-sky-500">
+                                Change Password
+                            </h1>
+                            <label>New Password</label>
+                            <input
+                                id="newPasswordInput"
+                                class="border bg-gray-950 rounded-md h-10 p-1"
+                                placeholder="New Password"
+                                type="password"
+                            />
+                            <br />
+                            <label>Confirm new Password</label>
+                            <input
+                                id="confirmNewPasswordInput"
+                                class="border bg-gray-950 rounded-md h-10 p-1"
+                                placeholder="Confirm new Password"
+                                type="password"
+                            />
+                            <br />
+                            <button
+                                class="bg-sky-500 w-24 h-10 px-3 py-1 rounded-xl font-semibold text-lg hover:bg-sky-600"
+                                id="changePasswordButton"
+                            >
+                                Confirm
+                            </button>
+                        </section>
+                    </section>
+                    <button
+                        class="bg-red-500 w-24 h-10 px-3 py-1 rounded-xl font-semibold text-lg hover:bg-red-600"
+                        id="logoutButton"
+                    >
+                        Log out
+                    </button>
+                </section>
+                <p class="text-md text-red-500" id="feedbackText"></p>
+            </section>
+        </main>
+    </body>
+</html>
