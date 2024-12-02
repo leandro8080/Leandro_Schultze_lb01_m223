@@ -126,6 +126,23 @@ export class API {
                 ),
             this.createComment
         );
+        this.app.put(
+            "/api/comments",
+            this.verifyToken,
+            body("commentId")
+                .isInt({ min: 1 })
+                .withMessage("ID must be a number greater than or equal to 1"),
+            body("newContent")
+                .trim()
+                .notEmpty()
+                .withMessage("Tweet is empty")
+                .isString()
+                .withMessage("Tweet must be a string")
+                .isLength({ max: 400 })
+                .withMessage("Tweet is to long")
+                .escape(),
+            this.editComment
+        );
         this.app.get(
             "/api/comments",
             this.verifyToken,
@@ -391,6 +408,36 @@ export class API {
         }
     };
 
+    private editComment = async (req: Request, res: Response): Promise<any> => {
+        try {
+            const validationRes = validationResult(req);
+            if (!validationRes.isEmpty()) {
+                return res.status(400).send(validationRes.array()[0].msg);
+            }
+
+            const { commentId, newContent } = matchedData(req);
+            const { userId } = req.body;
+
+            const comment = await this.getCommentById(Number(commentId));
+            const user = await this.createUserIfUndefined(Number(userId));
+            if (!comment) return res.status(400).send("Comment doesn't exist");
+            if (comment.getContent === newContent)
+                return res.status(400).send("Comment didn't change");
+
+            if (user.getUserId === userId || user.getRole !== "user") {
+                const query = `UPDATE comments SET content = "${newContent}" WHERE id = ${Number(commentId)};`;
+                await this.db.executeSQL(query);
+                const newComment = comment.editComment(newContent);
+                this.editCommentById(Number(commentId), newComment);
+                return res.sendStatus(200);
+            }
+            return res.sendStatus(401);
+        } catch (e) {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    };
+
     private getComments = async (req: Request, res: Response): Promise<any> => {
         try {
             const validationRes = validationResult(req);
@@ -622,10 +669,37 @@ export class API {
         return result;
     };
 
+    private getCommentById = async (
+        commentId: number
+    ): Promise<Comment | undefined> => {
+        let result: Comment | undefined = undefined;
+        for (const comment of this.createdComments) {
+            if (comment.getCommentId === commentId) {
+                result = comment;
+                break;
+            }
+        }
+        return result;
+    };
+
     private deletePostById = (postId: number): boolean => {
         for (let i = 0; i < this.createdPosts.length; i++) {
             if (this.createdPosts[i].getPostId === postId) {
                 this.createdPosts.splice(i, 1);
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    private editCommentById = (
+        commentId: number,
+        newComment: Comment
+    ): boolean => {
+        for (let i = 0; i < this.createdComments.length; i++) {
+            if (this.createdComments[i].getPostId === commentId) {
+                this.createdComments[i] = newComment;
                 return true;
             }
         }

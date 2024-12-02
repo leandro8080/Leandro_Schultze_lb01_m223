@@ -64,6 +64,28 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     };
 
+    const editComment = async (commentId, newContent) => {
+        const response = await fetch("/api/comments", {
+            method: "PUT",
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ commentId, newContent }),
+        });
+
+        const result = await response.text();
+        if (response.status == 200) {
+            feedbackText.innerText = "Successfully edited comment";
+            feedbackText.classList.remove("text-red-500");
+            feedbackText.classList.add("text-green-500");
+        } else {
+            feedbackText.classList.add("text-red-500");
+            feedbackText.classList.remove("text-green-500");
+            feedbackText.innerText = result;
+        }
+    };
+
     const deleteTweet = async () => {
         const postId = window.location.pathname.split("/")[2];
         const response = await fetch(`/api/tweets?postId=${postId}`, {
@@ -74,7 +96,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
         const result = await response.text();
         if (response.status === 200) window.location.pathname = "/";
-        feedbackText.innerText = result;
+        else {
+            feedbackText.innerText = result;
+        }
     };
 
     const getTweet = async () => {
@@ -123,7 +147,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             </section>`;
                 const editInput = document.getElementById("editInput");
                 editInput.addEventListener("keydown", async (event) => {
-                    if (event.key === "Enter") {
+                    if (event.key === "Enter" && !event.shiftKey) {
                         event.preventDefault();
                         const newContent = editInput.value;
                         await editTweet(newContent);
@@ -141,6 +165,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                     .addEventListener("click", async () => {
                         await deleteTweet();
                     });
+
+                autoResize(editInput);
             } else {
                 originalPost.innerHTML += `<section class="flex justify-center">
                     <section
@@ -171,7 +197,61 @@ document.addEventListener("DOMContentLoaded", async () => {
             const result = await response.json();
             commentList.innerHTML = "";
             result.forEach((comment) => {
-                commentList.innerHTML += `<section class="flex justify-center">
+                if (comment.userId == userId || userRole !== "user") {
+                    commentList.insertAdjacentHTML(
+                        "beforeend",
+                        `<section class="flex justify-center">
+                    <section
+                        class="border-2 h-auto p-2 w-2/3 rounded-xl border-sky-500""
+                    >
+                        <p class="font-bold">@${comment.username}</p>
+                        <section class="flex gap-3">
+                        <textarea
+                            id="editCommentInput${comment.commentId}"
+                            lang="en"
+                            class="placeholder-gray-300 bg-gray-950 resize-none overflow-hidden w-full h-auto border-none outline-none"
+                            placeholder="${comment.content}"
+                            maxlength="400"
+                            rows="1"
+                            oninput="autoResize(this)"
+                        >${comment.content}</textarea>
+                        <section>
+                            <section
+                                class="h-full w-full flex justify-center flex-col gap-3"
+                            >
+                                <button
+                                    class="bg-red-500 w-20 h-10 px-3 py-1 rounded-xl font-semibold text-lg hover:bg-red-600"
+                                >
+                                    Delete
+                                </button>
+                                <button
+                                    id="editCommentButton${comment.commentId}"
+                                    class="bg-sky-500 w-20 h-10 px-3 py-1 rounded-xl font-semibold text-lg hover:bg-sky-600"
+                                >
+                                    Edit
+                                </button>
+                            </section>
+                        </section>
+                    </section>
+                    </section>
+                </section>`
+                    );
+                    document.getElementById(
+                        `editCommentButton${comment.commentId}`
+                    ).onclick = async function () {
+                        const newContent = document.getElementById(
+                            `editCommentInput${comment.commentId}`
+                        ).value;
+                        await editComment(comment.commentId, newContent);
+                    };
+
+                    autoResize(
+                        document.getElementById(
+                            `editCommentInput${comment.commentId}`
+                        )
+                    );
+                } else {
+                    commentList.innerHTML += `<section class="flex justify-center">
                     <section
                         class="border-2 h-auto p-2 w-2/3 rounded-xl border-sky-500""
                     >
@@ -183,6 +263,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         </p>
                     </section>
                 </section>`;
+                }
             });
         } else {
             const result = await response.text();
@@ -270,7 +351,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     tweetInput.addEventListener("keydown", async (event) => {
-        if (event.key === "Enter") {
+        if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
             createComment();
         }

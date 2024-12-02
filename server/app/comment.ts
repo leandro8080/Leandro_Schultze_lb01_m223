@@ -23,4 +23,17 @@ export class Comment {
     public get getUserId(): number {
         return this.userId;
     }
+
+    public get getCommentId(): number {
+        return this.commentId;
+    }
+
+    public get getContent(): string {
+        return this.content;
+    }
+
+    public editComment(newContent: string): Comment {
+        this.content = newContent;
+        return this;
+    }
 }
