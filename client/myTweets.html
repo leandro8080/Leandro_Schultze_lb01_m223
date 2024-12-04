@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="/style.css" />
+        <title>Mini twitter my Tweets</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="myTweets.js"></script>
+    </head>
+    <body
+        class="bg-gray-950 text-white w-screen h-screen font-sans overflow-x-hidden"
+    >
+        <nav class="fixed h-screen w-1/6 pr-10">
+            <section
+                class="flex justify-center w-full border-r-2 h-screen border-sky-500 pt-4"
+            >
+                <section class="flex flex-col">
+                    <a href="/profile" class="text-gray-300 hover:text-white"
+                        >Settings</a
+                    ><a
+                        href="/my-tweets"
+                        class="underline underline-offset-4 decoration-sky-500"
+                        >My tweets</a
+                    ><a href="/" class="text-gray-300 hover:text-white"
+                        >My replies
+                    </a>
+                </section>
+            </section>
+        </nav>
+        <nav class="flex flex-row justify-center gap-6 p-2 text-lg">
+            <a href="/" class="text-gray-300 hover:text-white">Tweets</a>
+            <a
+                href="/profile"
+                class="underline underline-offset-4 decoration-sky-500"
+                >Profile</a
+            >
+        </nav>
+        <main>
+            <p
+                id="feedbackText"
+                class="text-red-500 w-full break-all text-sm flex justify-center min-h-10"
+            ></p>
+
+            <section
+                class="flex flex-col gap-2 align-middle"
+                id="tweetList"
+            ></section>
+        </main>
+    </body>
+</html>

@@ -87,6 +87,7 @@ export class API {
                 .withMessage("Password can't contain spaces"),
             this.changePassword
         );
+        this.app.get("/api/my-tweets", this.verifyToken, this.getTweetByUserId);
         this.app.post(
             "/api/tweets",
             this.verifyToken,
@@ -475,6 +476,31 @@ export class API {
                 })
             );
             return res.status(200).send(tweetsWithUsernames.reverse());
+        } catch (e) {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    };
+
+    private getTweetByUserId = async (
+        req: Request,
+        res: Response
+    ): Promise<any> => {
+        try {
+            const { userId } = req.body;
+            const posts = await this.getPostsByUserId(Number(userId));
+            if (!posts) return res.sendStatus(200);
+            const tweetsWithUsernames = await Promise.all(
+                posts.map(async (tweet) => {
+                    const user = await this.createUserIfUndefined(userId);
+                    return {
+                        ...tweet,
+                        username: user.getUsername,
+                    };
+                })
+            );
+
+            return res.status(200).send(tweetsWithUsernames);
         } catch (e) {
             console.log(e);
             return res.sendStatus(500);
