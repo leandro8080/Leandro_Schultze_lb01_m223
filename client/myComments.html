@@ -7,7 +7,7 @@
         <link rel="stylesheet" href="/style.css" />
         <title>Mini twitter my Tweets</title>
         <script src="https://cdn.tailwindcss.com"></script>
-        <script src="myTweets.js"></script>
+        <script src="myComments.js"></script>
     </head>
     <body
         class="bg-gray-950 text-white w-screen h-screen font-sans overflow-x-hidden"
@@ -19,13 +19,11 @@
                 <section class="flex flex-col">
                     <a href="/profile" class="text-gray-300 hover:text-white"
                         >Settings</a
-                    ><a
-                        href="/my-tweets"
-                        class="underline underline-offset-4 decoration-sky-500"
+                    ><a href="/my-tweets" class="text-gray-300 hover:text-white"
                         >My tweets</a
                     ><a
                         href="/my-replies"
-                        class="text-gray-300 hover:text-white"
+                        class="underline underline-offset-4 decoration-sky-500"
                         >My replies
                     </a>
                 </section>
@@ -47,7 +45,7 @@
 
             <section
                 class="flex flex-col gap-2 align-middle"
-                id="tweetList"
+                id="commentList"
             ></section>
         </main>
     </body>

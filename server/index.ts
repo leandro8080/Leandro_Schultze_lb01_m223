@@ -75,6 +75,11 @@ class Backend {
             const __dirname = resolve(dirname(""));
             res.sendFile(__dirname + "/client/myTweets.html");
         });
+
+        this._app.get("/my-replies", (req: Request, res: Response) => {
+            const __dirname = resolve(dirname(""));
+            res.sendFile(__dirname + "/client/myComments.html");
+        });
     }
 
     private startServer(): void {

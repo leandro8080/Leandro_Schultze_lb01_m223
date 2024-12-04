@@ -88,6 +88,11 @@ export class API {
             this.changePassword
         );
         this.app.get("/api/my-tweets", this.verifyToken, this.getTweetByUserId);
+        this.app.get(
+            "/api/my-comments",
+            this.verifyToken,
+            this.getCommentsByUserId
+        );
         this.app.post(
             "/api/tweets",
             this.verifyToken,
@@ -465,7 +470,7 @@ export class API {
             }
 
             const tweetsWithUsernames = await Promise.all(
-                this.createdPosts.map(async (tweet) => {
+                this.createdPosts.map(async (tweet: Post) => {
                     const user = await this.createUserIfUndefined(
                         tweet.getUserId
                     );
@@ -491,10 +496,35 @@ export class API {
             const posts = await this.getPostsByUserId(Number(userId));
             if (!posts) return res.sendStatus(200);
             const tweetsWithUsernames = await Promise.all(
-                posts.map(async (tweet) => {
+                posts.map(async (tweet: Post) => {
                     const user = await this.createUserIfUndefined(userId);
                     return {
                         ...tweet,
+                        username: user.getUsername,
+                    };
+                })
+            );
+
+            return res.status(200).send(tweetsWithUsernames);
+        } catch (e) {
+            console.log(e);
+            return res.sendStatus(500);
+        }
+    };
+
+    private getCommentsByUserId = async (
+        req: Request,
+        res: Response
+    ): Promise<any> => {
+        try {
+            const { userId } = req.body;
+            const comments = this.commentsByUserId(Number(userId));
+
+            const tweetsWithUsernames = await Promise.all(
+                comments.map(async (comment: Comment) => {
+                    const user = await this.createUserIfUndefined(userId);
+                    return {
+                        ...comment,
                         username: user.getUsername,
                     };
                 })
@@ -742,6 +772,16 @@ export class API {
         let result: Comment[] = [];
         this.createdComments.forEach((comment) => {
             if (comment.getPostId === postId) {
+                result.push(comment);
+            }
+        });
+        return result;
+    };
+
+    private commentsByUserId = (userId: number): Comment[] | [] => {
+        let result: Comment[] = [];
+        this.createdComments.forEach((comment) => {
+            if (comment.getUserId === userId) {
                 result.push(comment);
             }
         });
