@@ -17,7 +17,7 @@ export class Database {
         this.initializeDBSchema();
     }
     // Methods
-    private initializeDBSchema = async () => {
+    private initializeDBSchema = async (): Promise<void> => {
         console.log("Initializing DB schema...");
         await this.executeSQL(users);
         await this.executeSQL(posts);
@@ -25,7 +25,7 @@ export class Database {
         await this.executeSQL(likes);
     };
 
-    public executeSQL = async (query: string) => {
+    public executeSQL = async (query: string): Promise<any> => {
         try {
             const conn = await this._pool.getConnection();
             const res = await conn.query(query);

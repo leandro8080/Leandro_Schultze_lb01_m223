@@ -16,12 +16,12 @@ aes.setSecretKey(process.env.AESSECRETKEY);
 
 export class API {
     // Properties
-    app: Express;
-    db: Database;
-    jwtSecretKey = process.env.jwtSecretKey;
-    loggedInUsers: User[];
-    createdPosts: Post[];
-    createdComments: Comment[];
+    private app: Express;
+    private db: Database;
+    private jwtSecretKey: string | undefined = process.env.jwtSecretKey;
+    private loggedInUsers: User[];
+    private createdPosts: Post[];
+    private createdComments: Comment[];
     // Constructor
     constructor(app: Express, db: Database) {
         this.app = app;
@@ -410,7 +410,11 @@ export class API {
 
             if (post.getContent === newContent)
                 return res.status(400).send("Tweet didn't change");
-            if (userId === post.getUserId || user.getRole !== "user") {
+            if (
+                userId === post.getUserId ||
+                user.getRole === "admin" ||
+                user.getRole === "moderator"
+            ) {
                 const updateQuery = `UPDATE posts SET content = "${newContent}" WHERE id = ${postId}`;
                 await this.db.executeSQL(updateQuery);
                 post.editPost(newContent);
