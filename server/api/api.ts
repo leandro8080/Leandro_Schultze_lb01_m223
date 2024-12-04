@@ -442,6 +442,8 @@ export class API {
             if (!this.deletePostById(Number(postId)))
                 return res.status(400).send("Tweet doesn't exist");
 
+            this.deleteCommentByPostId(Number(postId));
+
             return res.sendStatus(200);
         } catch (e) {
             console.log(e);
@@ -912,6 +914,17 @@ export class API {
     private deleteByCommentId = (commentId: number): boolean => {
         for (let i = 0; i < this.createdComments.length; i++) {
             if (this.createdComments[i].getCommentId === commentId) {
+                this.createdComments.splice(i, 1);
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    private deleteCommentByPostId = (postId: number): boolean => {
+        for (let i = 0; i < this.createdComments.length; i++) {
+            if (this.createdComments[i].getPostId === postId) {
                 this.createdComments.splice(i, 1);
                 return true;
             }
