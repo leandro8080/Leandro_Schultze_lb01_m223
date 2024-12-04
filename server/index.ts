@@ -3,6 +3,7 @@ import { API } from "./api";
 import http from "http";
 import { resolve, dirname } from "path";
 import { Database } from "./database";
+import rateLimit from "express-rate-limit";
 
 class Backend {
     // Properties
@@ -31,6 +32,12 @@ class Backend {
 
         // Middlewares
         this._app.use(express.json());
+        const limiter = rateLimit({
+            windowMs: 60 * 1000,
+            limit: 50,
+            message: "Too many requests, please try again later.",
+        });
+        this._app.use(limiter);
 
         this._api = new API(this._app, this._database);
         this._env = (process.env.NODE_ENV || "development").trim();
